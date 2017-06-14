@@ -14,11 +14,16 @@
 
 package com.liferay.calendar.web.internal.upgrade;
 
+import com.liferay.calendar.service.CalendarResourceLocalService;
 import com.liferay.calendar.web.internal.upgrade.v1_0_0.UpgradePortletId;
 import com.liferay.calendar.web.internal.upgrade.v1_0_0.UpgradePortletPreferences;
+import com.liferay.calendar.web.internal.upgrade.v1_0_2.UpgradeResourcePermissions;
 import com.liferay.calendar.web.internal.upgrade.v1_1_1.UpgradeEventsDisplayPortletId;
 import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
+import com.liferay.portal.kernel.service.ResourceBlockLocalService;
+import com.liferay.portal.kernel.service.ResourceBlockPermissionLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 
@@ -51,7 +56,13 @@ public class CalendarWebUpgrade implements UpgradeStepRegistrator {
 				UpgradePortletPreferences());
 
 		registry.register(
-			"com.liferay.calendar.web", "1.0.1", "1.1.0",
+			"com.liferay.calendar.web", "1.0.1", "1.0.2",
+			new UpgradeResourcePermissions(
+				_resourceBlockLocalService, _calendarResourceLocalService,
+				_resourceBlockPermissionLocalService, _roleLocalService));
+
+		registry.register(
+			"com.liferay.calendar.web", "1.0.2", "1.1.0",
 			new com.liferay.calendar.web.internal.upgrade.v1_1_0.
 				UpgradePortletId());
 
@@ -63,9 +74,21 @@ public class CalendarWebUpgrade implements UpgradeStepRegistrator {
 	}
 
 	@Reference
+	private CalendarResourceLocalService _calendarResourceLocalService;
+
+	@Reference
 	private PortletPreferencesLocalService _portletPreferencesLocalService;
+
+	@Reference
+	private ResourceBlockLocalService _resourceBlockLocalService;
+
+	@Reference
+	private ResourceBlockPermissionLocalService
+		_resourceBlockPermissionLocalService;
 
 	@Reference
 	private ResourcePermissionLocalService _resourcePermissionLocalService;
 
+	@Reference
+	private RoleLocalService _roleLocalService;
 }
