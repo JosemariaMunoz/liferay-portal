@@ -38,8 +38,8 @@ import java.util.Set;
 public class UpgradeResourcePermissions extends UpgradeProcess {
 
 	public UpgradeResourcePermissions(
-		ResourceBlockLocalService resourceBlockLocalService,
 		CalendarResourceLocalService calendarResourceLocalService,
+		ResourceBlockLocalService resourceBlockLocalService,
 		ResourceBlockPermissionLocalService
 			resourceBlockPermissionLocalService,
 		RoleLocalService roleLocalService) {
