@@ -58,7 +58,7 @@ public class CalendarWebUpgrade implements UpgradeStepRegistrator {
 		registry.register(
 			"com.liferay.calendar.web", "1.0.1", "1.0.2",
 			new UpgradeResourcePermissions(
-				_resourceBlockLocalService, _calendarResourceLocalService,
+				_calendarResourceLocalService, _resourceBlockLocalService,
 				_resourceBlockPermissionLocalService, _roleLocalService));
 
 		registry.register(
@@ -91,4 +91,5 @@ public class CalendarWebUpgrade implements UpgradeStepRegistrator {
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
 }
