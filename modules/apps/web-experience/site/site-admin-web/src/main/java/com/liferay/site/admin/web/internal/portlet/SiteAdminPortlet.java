@@ -58,6 +58,7 @@ import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.GroupService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.LayoutSetLocalService;
+import com.liferay.portal.kernel.service.LayoutSetPrototypeLocalService;
 import com.liferay.portal.kernel.service.LayoutSetPrototypeService;
 import com.liferay.portal.kernel.service.LayoutSetService;
 import com.liferay.portal.kernel.service.MembershipRequestLocalService;
@@ -85,11 +86,13 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropertiesParamUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.liveusers.LiveUsers;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.site.admin.web.internal.constants.SiteAdminPortletKeys;
 import com.liferay.site.constants.SiteWebKeys;
 import com.liferay.site.util.GroupSearchProvider;
@@ -514,6 +517,13 @@ public class SiteAdminPortlet extends MVCPortlet {
 	}
 
 	@Reference(unbind = "-")
+	protected void setLayoutSetPrototypeLocalService(
+		LayoutSetPrototypeLocalService layoutSetPrototypeLocalService) {
+
+		this.layoutSetPrototypeLocalService = layoutSetPrototypeLocalService;
+	}
+
+	@Reference(unbind = "-")
 	protected void setLayoutSetPrototypeService(
 		LayoutSetPrototypeService layoutSetPrototypeService) {
 
@@ -899,6 +909,9 @@ public class SiteAdminPortlet extends MVCPortlet {
 				privateLayoutSetPrototypeId,
 				publicLayoutSetPrototypeLinkEnabled,
 				privateLayoutSetPrototypeLinkEnabled);
+
+			_checkTraceLayoutSetMergeable(liveGroup, true);
+			_checkTraceLayoutSetMergeable(liveGroup, false);
 		}
 		else {
 			SitesUtil.updateLayoutSetPrototypesLinks(
@@ -906,6 +919,9 @@ public class SiteAdminPortlet extends MVCPortlet {
 				privateLayoutSetPrototypeId,
 				publicLayoutSetPrototypeLinkEnabled,
 				privateLayoutSetPrototypeLinkEnabled);
+
+			_checkTraceLayoutSetMergeable(liveGroup.getStagingGroup(), true);
+			_checkTraceLayoutSetMergeable(liveGroup.getStagingGroup(), false);
 		}
 
 		// Staging
@@ -931,6 +947,7 @@ public class SiteAdminPortlet extends MVCPortlet {
 
 	protected LayoutLocalService layoutLocalService;
 	protected LayoutSetLocalService layoutSetLocalService;
+	protected LayoutSetPrototypeLocalService layoutSetPrototypeLocalService;
 	protected LayoutSetPrototypeService layoutSetPrototypeService;
 	protected LayoutSetService layoutSetService;
 	protected MembershipRequestLocalService membershipRequestLocalService;
@@ -947,6 +964,54 @@ public class SiteAdminPortlet extends MVCPortlet {
 	protected TeamLocalService teamLocalService;
 	protected UserLocalService userLocalService;
 	protected UserService userService;
+
+	private void _checkTraceLayoutSetMergeable(
+		Group group, boolean privateLayout) {
+
+		try {
+			LayoutSet layoutSet = layoutSetLocalService.getLayoutSet(
+				group.getGroupId(), privateLayout);
+
+			if (!layoutSet.isLayoutSetPrototypeLinkActive() ||
+				group.isLayoutPrototype() || group.isLayoutSetPrototype()) {
+
+				return;
+			}
+
+			LayoutSetPrototype layoutSetPrototype =
+				layoutSetPrototypeLocalService.
+					getLayoutSetPrototypeByUuidAndCompanyId(
+						layoutSet.getLayoutSetPrototypeUuid(),
+						layoutSet.getCompanyId());
+
+			LayoutSet layoutSetPrototypeLayoutSet =
+				layoutSetPrototype.getLayoutSet();
+
+			if (SitesUtil.getMergeFailCount(layoutSetPrototype) >
+					PropsValues.LAYOUT_SET_PROTOTYPE_MERGE_FAIL_THRESHOLD) {
+
+				StringBundler sb = new StringBundler(10);
+
+				sb.append("Merge not performed because merge-fail-count ");
+				sb.append("was reached to layout.set.prototype.merge.fail.");
+				sb.append("threshold from portal properties for group ");
+				sb.append(group.getGroupId());
+				sb.append(", based on layoutSetPrototypeId ");
+				sb.append(layoutSetPrototype.getLayoutSetPrototypeId());
+				sb.append(" with layoutSetId ");
+				sb.append(layoutSetPrototypeLayoutSet.getLayoutSetId());
+				sb.append(". Update the count in Site Menu > Site Settings > ");
+				sb.append("Reset and Propagate button (pages section)");
+
+				_log.error(sb.toString());
+			}
+		}
+		catch (Exception e) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(e, e);
+			}
+		}
+	}
 
 	private static final int _LAYOUT_SET_VISIBILITY_PRIVATE = 1;
 
