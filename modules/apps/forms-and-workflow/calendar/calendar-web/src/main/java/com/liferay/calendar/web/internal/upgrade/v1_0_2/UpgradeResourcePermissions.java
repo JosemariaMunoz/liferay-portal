@@ -16,8 +16,13 @@ package com.liferay.calendar.web.internal.upgrade.v1_0_2;
 
 import com.liferay.calendar.model.CalendarResource;
 import com.liferay.calendar.service.CalendarResourceLocalService;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.RoleConstants;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
+import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ResourceBlockLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
@@ -31,15 +36,24 @@ public class UpgradeResourcePermissions extends UpgradeProcess {
 
 	public UpgradeResourcePermissions(
 		CalendarResourceLocalService calendarResourceLocalService,
+		ResourceActionLocalService resourceActionLocalService,
 		ResourceBlockLocalService resourceBlockLocalService,
 		RoleLocalService roleLocalService) {
 
 		_calendarResourceLocalService = calendarResourceLocalService;
+		_resourceActionLocalService = resourceActionLocalService;
 		_resourceBlockLocalService = resourceBlockLocalService;
 		_roleLocalService = roleLocalService;
 	}
 
 	public void upgradeResourcePermissions() throws Exception {
+		long bitwiseValue = getCalendarResourceUnsupportedActionsBitwiseValue(
+			_NEW_UNSUPPORTED_ACTION_IDS);
+
+		if (bitwiseValue == 0) {
+			return;
+		}
+
 		int contCalendarResource =
 			_calendarResourceLocalService.getCalendarResourcesCount();
 
@@ -54,7 +68,7 @@ public class UpgradeResourcePermissions extends UpgradeProcess {
 			_resourceBlockLocalService.removeIndividualScopePermissions(
 				calendarResource.getCompanyId(), calendarResource.getGroupId(),
 				_CALENDAR_RESOURCE_NAME, calendarResource.getPrimaryKey(),
-				guestRole.getRoleId(), 0);
+				guestRole.getRoleId(), bitwiseValue);
 		}
 	}
 
@@ -63,10 +77,37 @@ public class UpgradeResourcePermissions extends UpgradeProcess {
 		upgradeResourcePermissions();
 	}
 
+	protected long getCalendarResourceUnsupportedActionsBitwiseValue(
+			String[] resourceActionIds)
+		throws PortalException {
+
+		List<String> guestUnsupportedActions =
+			ResourceActionsUtil.getModelResourceGuestUnsupportedActions(
+				_CALENDAR_RESOURCE_NAME);
+
+		long bitwiseValue = 0;
+
+		for (String resourceActionId : resourceActionIds) {
+			if (guestUnsupportedActions.contains(resourceActionId)) {
+				ResourceAction resourceAction =
+					_resourceActionLocalService.getResourceAction(
+						_CALENDAR_RESOURCE_NAME, resourceActionId);
+
+				bitwiseValue |= resourceAction.getBitwiseValue();
+			}
+		}
+
+		return bitwiseValue;
+	}
+
 	private static final String _CALENDAR_RESOURCE_NAME =
 		"com.liferay.calendar.model.CalendarResource";
 
+	private static final String[] _NEW_UNSUPPORTED_ACTION_IDS =
+		{ActionKeys.PERMISSIONS, ActionKeys.VIEW};
+
 	private final CalendarResourceLocalService _calendarResourceLocalService;
+	private final ResourceActionLocalService _resourceActionLocalService;
 	private final ResourceBlockLocalService _resourceBlockLocalService;
 	private final RoleLocalService _roleLocalService;
 
