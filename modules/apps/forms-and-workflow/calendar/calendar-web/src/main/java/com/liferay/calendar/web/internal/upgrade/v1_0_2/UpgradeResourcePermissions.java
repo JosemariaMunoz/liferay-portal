@@ -31,6 +31,8 @@ import java.util.List;
 
 /**
  * @author José María Muñoz
+ * @author Alberto Chaparro
+ *
  */
 public class UpgradeResourcePermissions extends UpgradeProcess {
 
@@ -46,7 +48,7 @@ public class UpgradeResourcePermissions extends UpgradeProcess {
 		_roleLocalService = roleLocalService;
 	}
 
-	public void upgradeResourcePermissions() throws Exception {
+	protected void upgradeGuestResourcePermissions() throws Exception {
 		long bitwiseValue = getCalendarResourceUnsupportedActionsBitwiseValue(
 			_NEW_UNSUPPORTED_ACTION_IDS);
 
@@ -74,7 +76,7 @@ public class UpgradeResourcePermissions extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		upgradeResourcePermissions();
+		upgradeGuestResourcePermissions();
 	}
 
 	protected long getCalendarResourceUnsupportedActionsBitwiseValue(
