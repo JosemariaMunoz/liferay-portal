@@ -16,21 +16,13 @@ package com.liferay.calendar.web.internal.upgrade.v1_0_2;
 
 import com.liferay.calendar.model.CalendarResource;
 import com.liferay.calendar.service.CalendarResourceLocalService;
-import com.liferay.portal.kernel.model.ResourceBlock;
-import com.liferay.portal.kernel.model.ResourceBlockPermissionsContainer;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.RoleConstants;
 import com.liferay.portal.kernel.service.ResourceBlockLocalService;
-import com.liferay.portal.kernel.service.ResourceBlockPermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
-import com.liferay.portal.kernel.util.Validator;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author José María Muñoz
@@ -40,14 +32,10 @@ public class UpgradeResourcePermissions extends UpgradeProcess {
 	public UpgradeResourcePermissions(
 		CalendarResourceLocalService calendarResourceLocalService,
 		ResourceBlockLocalService resourceBlockLocalService,
-		ResourceBlockPermissionLocalService
-			resourceBlockPermissionLocalService,
 		RoleLocalService roleLocalService) {
 
 		_calendarResourceLocalService = calendarResourceLocalService;
 		_resourceBlockLocalService = resourceBlockLocalService;
-		_resourceBlockPermissionLocalService =
-			resourceBlockPermissionLocalService;
 		_roleLocalService = roleLocalService;
 	}
 
@@ -60,46 +48,13 @@ public class UpgradeResourcePermissions extends UpgradeProcess {
 				0, contCalendarResource);
 
 		for (CalendarResource calendarResource : calendarResources) {
-			ResourceBlock resourceBlock =
-				_resourceBlockLocalService.getResourceBlock(
-					calendarResource.getResourceBlockId());
+			Role guestRole = _roleLocalService.getRole(
+				calendarResource.getCompanyId(), RoleConstants.GUEST);
 
-			ResourceBlockPermissionsContainer
-				resourceBlockPermissionsContainer =
-					_resourceBlockPermissionLocalService.
-						getResourceBlockPermissionsContainer(
-							calendarResource.getResourceBlockId());
-
-			Map<Long, String[]> roleIdsToActionIds = new HashMap<>();
-
-			Set<Long> roleIds = resourceBlockPermissionsContainer.getRoleIds();
-
-			boolean existUserGuest = false;
-
-			for (long roleId : roleIds) {
-				List<String> actionIds = new ArrayList<>();
-				Role role = _roleLocalService.getRole(roleId);
-
-				if (Validator.isNotNull(role) &&
-					!RoleConstants.GUEST.equals(role.getName())) {
-
-					actionIds = _resourceBlockLocalService.getPermissions(
-						resourceBlock, roleId);
-				}
-				else {
-					existUserGuest = true;
-				}
-
-				roleIdsToActionIds.put(
-					roleId, actionIds.toArray(new String[actionIds.size()]));
-			}
-
-			if (existUserGuest) {
-				_resourceBlockLocalService.setIndividualScopePermissions(
-					calendarResource.getCompanyId(),
-					calendarResource.getGroupId(), _CALENDAR_RESOURCE_NAME,
-					calendarResource.getPrimaryKey(), roleIdsToActionIds);
-			}
+			_resourceBlockLocalService.removeIndividualScopePermissions(
+				calendarResource.getCompanyId(), calendarResource.getGroupId(),
+				_CALENDAR_RESOURCE_NAME, calendarResource.getPrimaryKey(),
+				guestRole.getRoleId(), 0);
 		}
 	}
 
@@ -113,8 +68,6 @@ public class UpgradeResourcePermissions extends UpgradeProcess {
 
 	private final CalendarResourceLocalService _calendarResourceLocalService;
 	private final ResourceBlockLocalService _resourceBlockLocalService;
-	private final ResourceBlockPermissionLocalService
-		_resourceBlockPermissionLocalService;
 	private final RoleLocalService _roleLocalService;
 
 }

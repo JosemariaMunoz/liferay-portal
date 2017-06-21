@@ -21,7 +21,6 @@ import com.liferay.calendar.web.internal.upgrade.v1_0_2.UpgradeResourcePermissio
 import com.liferay.calendar.web.internal.upgrade.v1_1_1.UpgradeEventsDisplayPortletId;
 import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
 import com.liferay.portal.kernel.service.ResourceBlockLocalService;
-import com.liferay.portal.kernel.service.ResourceBlockPermissionLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
@@ -59,7 +58,7 @@ public class CalendarWebUpgrade implements UpgradeStepRegistrator {
 			"com.liferay.calendar.web", "1.0.1", "1.0.2",
 			new UpgradeResourcePermissions(
 				_calendarResourceLocalService, _resourceBlockLocalService,
-				_resourceBlockPermissionLocalService, _roleLocalService));
+				_roleLocalService));
 
 		registry.register(
 			"com.liferay.calendar.web", "1.0.2", "1.1.0",
@@ -81,10 +80,6 @@ public class CalendarWebUpgrade implements UpgradeStepRegistrator {
 
 	@Reference
 	private ResourceBlockLocalService _resourceBlockLocalService;
-
-	@Reference
-	private ResourceBlockPermissionLocalService
-		_resourceBlockPermissionLocalService;
 
 	@Reference
 	private ResourcePermissionLocalService _resourcePermissionLocalService;
