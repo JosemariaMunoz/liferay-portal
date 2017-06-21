@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.calendar.web.internal.upgrade.v1_0_2;
+package com.liferay.calendar.internal.upgrade.v1_0_6;
 
 import com.liferay.calendar.model.CalendarResource;
 import com.liferay.calendar.service.CalendarResourceLocalService;
@@ -32,7 +32,6 @@ import java.util.List;
 /**
  * @author José María Muñoz
  * @author Alberto Chaparro
- *
  */
 public class UpgradeResourcePermissions extends UpgradeProcess {
 
@@ -46,32 +45,6 @@ public class UpgradeResourcePermissions extends UpgradeProcess {
 		_resourceActionLocalService = resourceActionLocalService;
 		_resourceBlockLocalService = resourceBlockLocalService;
 		_roleLocalService = roleLocalService;
-	}
-
-	protected void upgradeGuestResourcePermissions() throws Exception {
-		long bitwiseValue = getCalendarResourceUnsupportedActionsBitwiseValue(
-			_NEW_UNSUPPORTED_ACTION_IDS);
-
-		if (bitwiseValue == 0) {
-			return;
-		}
-
-		int contCalendarResource =
-			_calendarResourceLocalService.getCalendarResourcesCount();
-
-		List<CalendarResource> calendarResources =
-			_calendarResourceLocalService.getCalendarResources(
-				0, contCalendarResource);
-
-		for (CalendarResource calendarResource : calendarResources) {
-			Role guestRole = _roleLocalService.getRole(
-				calendarResource.getCompanyId(), RoleConstants.GUEST);
-
-			_resourceBlockLocalService.removeIndividualScopePermissions(
-				calendarResource.getCompanyId(), calendarResource.getGroupId(),
-				_CALENDAR_RESOURCE_NAME, calendarResource.getPrimaryKey(),
-				guestRole.getRoleId(), bitwiseValue);
-		}
 	}
 
 	@Override
@@ -100,6 +73,32 @@ public class UpgradeResourcePermissions extends UpgradeProcess {
 		}
 
 		return bitwiseValue;
+	}
+
+	protected void upgradeGuestResourcePermissions() throws Exception {
+		long bitwiseValue = getCalendarResourceUnsupportedActionsBitwiseValue(
+			_NEW_UNSUPPORTED_ACTION_IDS);
+
+		if (bitwiseValue == 0) {
+			return;
+		}
+
+		int contCalendarResource =
+			_calendarResourceLocalService.getCalendarResourcesCount();
+
+		List<CalendarResource> calendarResources =
+			_calendarResourceLocalService.getCalendarResources(
+				0, contCalendarResource);
+
+		for (CalendarResource calendarResource : calendarResources) {
+			Role guestRole = _roleLocalService.getRole(
+				calendarResource.getCompanyId(), RoleConstants.GUEST);
+
+			_resourceBlockLocalService.removeIndividualScopePermissions(
+				calendarResource.getCompanyId(), calendarResource.getGroupId(),
+				_CALENDAR_RESOURCE_NAME, calendarResource.getPrimaryKey(),
+				guestRole.getRoleId(), bitwiseValue);
+		}
 	}
 
 	private static final String _CALENDAR_RESOURCE_NAME =
