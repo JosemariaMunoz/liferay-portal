@@ -278,8 +278,6 @@ public class InvokerFilter extends BasePortalLifecycle implements Filter {
 			return true;
 		}
 
-		response.sendError(HttpServletResponse.SC_REQUEST_URI_TOO_LONG);
-
 		if (_log.isWarnEnabled()) {
 			StringBundler sb = new StringBundler(5);
 
@@ -292,6 +290,10 @@ public class InvokerFilter extends BasePortalLifecycle implements Filter {
 			sb.append(" characters");
 
 			_log.warn(sb.toString());
+		}
+
+		if (!response.isCommitted()) {
+			response.sendError(HttpServletResponse.SC_REQUEST_URI_TOO_LONG);
 		}
 
 		return false;
