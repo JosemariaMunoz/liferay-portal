@@ -128,9 +128,11 @@ public class SearchDisplayContext {
 
 		searchContext.setKeywords(_keywords.getKeywords());
 
-		searchContext.setEntryClassNames(
-			AssetEntriesSearchFacet.getEntryClassNames(
-				getSearchConfiguration()));
+		if (Validator.isNull(request)) {
+			searchContext.setEntryClassNames(
+				AssetEntriesSearchFacet.getEntryClassNames(
+					getSearchConfiguration()));
+		}
 
 		SearchRequestImpl searchRequestImpl = new SearchRequestImpl(
 			() -> searchContext, searchContainerOptions -> searchContainer,
