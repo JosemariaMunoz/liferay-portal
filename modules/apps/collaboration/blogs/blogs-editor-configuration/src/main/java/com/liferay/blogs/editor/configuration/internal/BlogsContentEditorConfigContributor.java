@@ -56,8 +56,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Roberto Díaz
  */
 @Component(
-	configurationPid =
-		"com.liferay.portal.security.antisamy.configuration.AntiSamyConfiguration",
+	configurationPid = "com.liferay.portal.security.antisamy.configuration.AntiSamyConfiguration",
 	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
 	property = {
 		"editor.config.key=contentEditor",
@@ -69,30 +68,25 @@ import org.osgi.service.component.annotations.Reference;
 public class BlogsContentEditorConfigContributor
 	extends BaseEditorConfigContributor {
 
-	private AntiSamyConfiguration antiSamyConfiguration;
-
-	@Activate
-	protected void activate(
-		BundleContext bundleContext, Map<String, Object> properties) {
-
-		antiSamyConfiguration = ConfigurableUtil.createConfigurable(
-			AntiSamyConfiguration.class, properties);
-	}
-
 	@Override
 	public void populateConfigJSONObject(
 		JSONObject jsonObject, Map<String, Object> inputEditorTaglibAttributes,
 		ThemeDisplay themeDisplay,
 		RequestBackedPortletURLFactory requestBackedPortletURLFactory) {
 
+		boolean enabled = true;
+		String[] blacklist = null;
 		String[] whitelist = null;
 
-		if (antiSamyConfiguration != null) {
-			whitelist = antiSamyConfiguration.whitelist();
+		if (_antiSamyConfiguration != null) {
+			enabled = _antiSamyConfiguration.enabled();
+			blacklist = _antiSamyConfiguration.blacklist();
+			whitelist = _antiSamyConfiguration.whitelist();
 		}
 
-		if (antiSamyConfiguration != null &&
-			ArrayUtil.contains(whitelist, BlogsEntry.class.getName())) {
+		if ((_antiSamyConfiguration != null) && enabled &&
+			(ArrayUtil.contains(blacklist, BlogsEntry.class.getName()) ||
+			 !ArrayUtil.contains(whitelist, BlogsEntry.class.getName()))) {
 
 			StringBundler sb = new StringBundler(6);
 
@@ -120,6 +114,14 @@ public class BlogsContentEditorConfigContributor
 	@Reference(unbind = "-")
 	public void setItemSelector(ItemSelector itemSelector) {
 		_itemSelector = itemSelector;
+	}
+
+	@Activate
+	protected void activate(
+		BundleContext bundleContext, Map<String, Object> properties) {
+
+		_antiSamyConfiguration = ConfigurableUtil.createConfigurable(
+			AntiSamyConfiguration.class, properties);
 	}
 
 	protected String getAllowedContentLists() {
@@ -204,6 +206,7 @@ public class BlogsContentEditorConfigContributor
 		jsonObject.put("filebrowserImageBrowseUrl", itemSelectorURL.toString());
 	}
 
+	private AntiSamyConfiguration _antiSamyConfiguration;
 	private ItemSelector _itemSelector;
 
 }
