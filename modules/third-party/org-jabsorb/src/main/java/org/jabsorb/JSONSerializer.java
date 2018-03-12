@@ -845,3 +845,4 @@ public class JSONSerializer implements Serializable
     }
   }
 }
+/* @generated */
