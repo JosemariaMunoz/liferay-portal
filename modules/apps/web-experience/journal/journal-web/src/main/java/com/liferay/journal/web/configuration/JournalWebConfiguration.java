@@ -95,4 +95,5 @@ public interface JournalWebConfiguration {
 		required = false
 	)
 	public boolean showAncestorScopesByDefault();
+
 }

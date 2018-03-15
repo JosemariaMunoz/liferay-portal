@@ -87,9 +87,10 @@ public class StructuresPortletConfigurationIcon
 			"refererPortletName", JournalPortletKeys.JOURNAL);
 		portletURL.setParameter(
 			"refererWebDAVToken", WebDAVUtil.getStorageToken(portlet));
-		portletURL.setParameter("showAncestorScopes", 
-			String.valueOf(
-				_journalWebConfiguration.showAncestorScopesByDefault()));
+		portletURL.setParameter(
+			"showAncestorScopes",
+			String.valueOf(_journalWebConfiguration.
+				showAncestorScopesByDefault()));
 		portletURL.setParameter("showCacheableInput", Boolean.TRUE.toString());
 		portletURL.setParameter("showManageTemplates", Boolean.TRUE.toString());
 
@@ -134,9 +135,7 @@ public class StructuresPortletConfigurationIcon
 		_portletLocalService = portletLocalService;
 	}
 
-	private PortletLocalService _portletLocalService;
-
 	private volatile JournalWebConfiguration _journalWebConfiguration;
-
+	private PortletLocalService _portletLocalService;
 
 }
