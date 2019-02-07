@@ -42,6 +42,7 @@ import com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration;
 import com.liferay.portal.security.ldap.configuration.SystemLDAPConfiguration;
 import com.liferay.portal.security.ldap.constants.LDAPConstants;
 import com.liferay.portal.security.ldap.exportimport.LDAPUserImporter;
+import com.liferay.portal.security.ldap.exportimport.configuration.LDAPExportConfiguration;
 import com.liferay.portal.security.ldap.exportimport.configuration.LDAPImportConfiguration;
 import com.liferay.portal.security.ldap.util.LDAPUtil;
 
@@ -489,6 +490,16 @@ public class LDAPAuth implements Authenticator {
 			return Authenticator.SKIP_LIFERAY_CHECK;
 		}
 
+		boolean anyFailure = false;
+		boolean anyDne = false;
+
+		if (preferredLDAPServerResult == FAILURE) {
+			anyFailure = true;
+		}
+		else if (preferredLDAPServerResult == DNE) {
+			anyDne = true;
+		}
+
 		List<LDAPServerConfiguration> ldapServerConfigurations =
 			_ldapServerConfigurationProvider.getConfigurations(companyId);
 
@@ -516,10 +527,24 @@ public class LDAPAuth implements Authenticator {
 
 				return Authenticator.SKIP_LIFERAY_CHECK;
 			}
+
+			if (result == FAILURE) {
+				anyFailure = true;
+			}
+			else if (result == DNE) {
+				anyDne = true;
+			}
 		}
 
-		return authenticateRequired(
+		int authResult = authenticateRequired(
 			companyId, userId, emailAddress, screenName, true, FAILURE);
+
+		if ((authResult != SUCCESS) || (anyDne && !anyFailure)) {
+			return authResult;
+		}
+
+		return authenticateImportEnable(
+			companyId, userId, emailAddress, screenName, true, FAILURE, false);
 	}
 
 	protected int authenticateAgainstPreferredLDAPServer(
@@ -548,6 +573,36 @@ public class LDAPAuth implements Authenticator {
 			password);
 
 		return result;
+	}
+
+	protected int authenticateImportEnable(
+			long companyId, long userId, String emailAddress, String screenName,
+			boolean allowOmniadmin, int failureCode, boolean exportEnabled)
+		throws Exception {
+
+		// Make exceptions for omniadmins so that if they break the LDAP
+		// configuration, they can still login to fix the problem
+
+		if (allowOmniadmin &&
+			(authenticateOmniadmin(
+				companyId, emailAddress, screenName, userId) == SUCCESS)) {
+
+			return SUCCESS;
+		}
+
+		LDAPImportConfiguration ldapImportConfiguration =
+			_ldapImportConfigurationProvider.getConfiguration(companyId);
+
+		LDAPExportConfiguration ldapExportConfiguration =
+			_ldapExportConfigurationProvider.getConfiguration(companyId);
+
+		if (ldapImportConfiguration.importEnabled() &&
+			(ldapExportConfiguration.exportEnabled() == exportEnabled)) {
+
+			return failureCode;
+		}
+
+		return SUCCESS;
 	}
 
 	protected int authenticateOmniadmin(
@@ -725,6 +780,17 @@ public class LDAPAuth implements Authenticator {
 	}
 
 	@Reference(
+		target = "(factoryPid=com.liferay.portal.security.ldap.exportimport.configuration.LDAPExportConfiguration)",
+		unbind = "-"
+	)
+	protected void setLDAPExportConfigurationProvider(
+		ConfigurationProvider<LDAPExportConfiguration>
+			ldapExportConfigurationProvider) {
+
+		_ldapExportConfigurationProvider = ldapExportConfigurationProvider;
+	}
+
+	@Reference(
 		target = "(factoryPid=com.liferay.portal.security.ldap.exportimport.configuration.LDAPImportConfiguration)",
 		unbind = "-"
 	)
@@ -790,6 +856,8 @@ public class LDAPAuth implements Authenticator {
 			LDAPAuth.class + "._failedLDAPAuthResultCache", HashMap::new);
 	private ConfigurationProvider<LDAPAuthConfiguration>
 		_ldapAuthConfigurationProvider;
+	private ConfigurationProvider<LDAPExportConfiguration>
+		_ldapExportConfigurationProvider;
 	private ConfigurationProvider<LDAPImportConfiguration>
 		_ldapImportConfigurationProvider;
 	private ConfigurationProvider<LDAPServerConfiguration>
