@@ -519,8 +519,15 @@ public class LDAPAuth implements Authenticator {
 			}
 		}
 
-		return authenticateRequired(
+		int authResult = authenticateRequired(
 			companyId, userId, emailAddress, screenName, true, FAILURE);
+
+		if (authResult != SUCCESS) {
+			return authResult;
+		}
+
+		return authenticateImportEnable(
+			companyId, userId, emailAddress, screenName, true, FAILURE, false);
 	}
 
 	protected int authenticateAgainstPreferredLDAPServer(
