@@ -490,16 +490,6 @@ public class LDAPAuth implements Authenticator {
 			return Authenticator.SKIP_LIFERAY_CHECK;
 		}
 
-		boolean anyFailure = false;
-		boolean anyDne = false;
-
-		if (preferredLDAPServerResult == FAILURE) {
-			anyFailure = true;
-		}
-		else if (preferredLDAPServerResult == DNE) {
-			anyDne = true;
-		}
-
 		List<LDAPServerConfiguration> ldapServerConfigurations =
 			_ldapServerConfigurationProvider.getConfigurations(companyId);
 
@@ -527,24 +517,10 @@ public class LDAPAuth implements Authenticator {
 
 				return Authenticator.SKIP_LIFERAY_CHECK;
 			}
-
-			if (result == FAILURE) {
-				anyFailure = true;
-			}
-			else if (result == DNE) {
-				anyDne = true;
-			}
 		}
 
-		int authResult = authenticateRequired(
+		return authenticateRequired(
 			companyId, userId, emailAddress, screenName, true, FAILURE);
-
-		if ((authResult != SUCCESS) || (anyDne && !anyFailure)) {
-			return authResult;
-		}
-
-		return authenticateImportEnable(
-			companyId, userId, emailAddress, screenName, true, FAILURE, false);
 	}
 
 	protected int authenticateAgainstPreferredLDAPServer(
