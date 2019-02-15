@@ -522,7 +522,7 @@ public class LDAPAuth implements Authenticator {
 		int authResult = authenticateRequired(
 			companyId, userId, emailAddress, screenName, true, FAILURE);
 
-		if (authResult != SUCCESS) {
+		if ((authResult != SUCCESS) || (preferredLDAPServerId == -1)) {
 			return authResult;
 		}
 
